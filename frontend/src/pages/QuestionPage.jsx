@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import Question from "../components/Question";
 import Timer from "../components/Timer";
 import ChatFAB from "../components/ChatFAB";
@@ -6,42 +6,31 @@ import styles from "./QuestionPage.module.css";
 import Button from "../components/Button";
 import { useNavigate } from "react-router-dom";
 import socket from "../socket";
+import WaitPage from "./WaitPage";
+import { calcRemTime, clearQuestionActive } from "../utils/questionMarker";
 
-const sampleQuestion = {
-  id: 1,
-  text: "Which planet is known as the Red Planet?",
-  options: [
-    { id: 1, text: "Mars", totalSelected: 15 },
-    { id: 2, text: "Venus", totalSelected: 1 },
-    { id: 3, text: "Jupiter", totalSelected: 1 },
-    { id: 4, text: "Saturn", totalSelected: 3 },
-  ],
-  correctAnswerId: 1,
-  totalStudentsAnswered: 20,
-};
+// const sampleParticipants = [
+//   { id: 1, name: "Rahul Arora" },
+//   { id: 2, name: "Pushpender Rautela" },
+//   { id: 3, name: "Rijul Zalpuri" },
+//   { id: 4, name: "Nadeem N" },
+//   { id: 5, name: "Ashwin Sharma" },
+// ];
 
-const sampleParticipants = [
-  { id: 1, name: "Rahul Arora" },
-  { id: 2, name: "Pushpender Rautela" },
-  { id: 3, name: "Rijul Zalpuri" },
-  { id: 4, name: "Nadeem N" },
-  { id: 5, name: "Ashwin Sharma" },
-];
-
-const sampleChats = [
-  {
-    id: 1,
-    user: "User1",
-    message: "Hey There , how can I help?",
-    timestamp: new Date(),
-  },
-  {
-    id: 2,
-    user: "User2",
-    message: "Nothing bro..just chill!!",
-    timestamp: new Date(),
-  },
-];
+// const sampleChats = [
+//   {
+//     id: 1,
+//     user: "User1",
+//     message: "Hey There , how can I help?",
+//     timestamp: new Date(),
+//   },
+//   {
+//     id: 2,
+//     user: "User2",
+//     message: "Nothing bro..just chill!!",
+//     timestamp: new Date(),
+//   },
+// ];
 
 function QuestionsPage() {
   const [currentQuestion, setCurrentQuestion] = useState(
@@ -50,16 +39,67 @@ function QuestionsPage() {
       : null
   );
   const [selectedOption, setSelectedOption] = useState(null);
-  const [showCorrectAnswer, setShowCorrectAnswer] = useState(false);
-  const [timeLeft, setTimeLeft] = useState(15);
-  const [questionState, setQuestionState] = useState("active");
-  const navigate = useNavigate();
+  const [showDistribution, setShowDistribution] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate()
+
+  const storeSelectedOption = useCallback((val) => {
+    sessionStorage.setItem("selected-index", String(val));
+  }, []);
 
   useEffect(() => {
+    if(!currentQuestion) return;
+    const remTime = calcRemTime(
+      currentQuestion?.askedAt,
+      currentQuestion?.duration
+    );
+    const timer = setTimeout(() => {
+      setShowDistribution(true);
+    }, remTime * 1000);
+    return () => clearTimeout(timer);
+  }, [currentQuestion]);
+
+  useEffect(() => {
+    const storedOption = sessionStorage.getItem("selected-index");
+    if (storedOption && !isNaN(parseInt(storedOption))) {
+      setSelectedOption(parseInt(storedOption));
+      setShowDistribution(true);
+    }
     socket.on("new-question", (data) => {
       sessionStorage.setItem("currentQuestion", JSON.stringify(data));
-      navigate("/live-poll");
+      storeSelectedOption(null);
+      setSelectedOption(null);
+      setCurrentQuestion(data);
+      setShowDistribution(false);
     });
+
+    socket.on("submit-answer-success", ({ message, optionIndex }) => {
+      setLoading(false);
+      setShowDistribution(true);
+      storeSelectedOption(optionIndex);
+    });
+
+    socket.on("submit-answer-error", ({ message }) => {
+      setLoading(false);
+      alert(message);
+    });
+
+    socket.on("poll-update", ({ totalAnswered, options }) => {
+      setCurrentQuestion((prev) => {
+        const newSate = { ...prev };
+        newSate.totalAnswered = totalAnswered;
+        newSate.options = prev.options.map((op, idx) => ({
+          ...op,
+          totalSelected: options[idx].totalSelected,
+        }));
+        sessionStorage.setItem("currentQuestion", JSON.stringify(newSate));
+        return newSate;
+      });
+    });
+    const student = sessionStorage.getItem("student")
+    if(!student){
+      navigate("/student")
+    }
   }, []);
 
   const handleOptionSelect = (optionId) => {
@@ -67,34 +107,23 @@ function QuestionsPage() {
   };
 
   const handleSubmit = () => {
-    setQuestionState("submitted");
+    setLoading(true);
+    const student = sessionStorage.getItem("student") || null;
+    const uuid = student ? JSON.parse(student)?.uuid : null;
+    socket.emit("submit-answer", { uuid, optionIndex: selectedOption });
   };
 
-  const handleTimerFinish = () => {
-    console.log("Timer finished!");
-    setQuestionState("results");
-    setShowResults(true);
-    setShowCorrectAnswer(true);
-  };
-
-  const toggleResults = () => {
-    setShowResults(!showResults);
-    setShowCorrectAnswer(!showCorrectAnswer);
-    setQuestionState(showResults ? "active" : "results");
-  };
-
-  return (
+  return currentQuestion ? (
     <div className={styles.app}>
       <div className={styles.container}>
         <div className={styles.header}>
           <div className={styles.questionWithTimer}>
             <h1 className={styles.questionTitle}>
-              Question {sampleQuestion.id}
+              Question {currentQuestion.id}
             </h1>
             <Timer
-              timeInSeconds={timeLeft}
-              onFinish={handleTimerFinish}
-              isActive={questionState === "active"}
+              startedAt={currentQuestion?.askedAt}
+              duration={currentQuestion?.duration}
             />
           </div>
         </div>
@@ -105,24 +134,32 @@ function QuestionsPage() {
           onOptionSelect={handleOptionSelect}
           selectedOption={selectedOption}
           totalStudentsAnswered={currentQuestion?.totalAnswered}
-          showDistribution={false}
-          questionState={questionState}
+          showDistribution={showDistribution}
           onSubmit={handleSubmit}
         />
 
-        {questionState === "results" && (
+        {showDistribution && (
           <div className={styles.waitingMessage}>
             <p>Wait for the teacher to ask a new question..</p>
           </div>
         )}
 
         <div className={styles.controls}>
-          <Button>Submit</Button>
+          {!showDistribution && (
+            <Button
+              onClick={handleSubmit}
+              disabled={loading || showDistribution}
+            >
+              {loading ? "Submitting..." : "Submit"}
+            </Button>
+          )}
         </div>
       </div>
 
-      <ChatFAB participants={sampleParticipants} chats={sampleChats} />
+      {/* <ChatFAB participants={sampleParticipants} chats={sampleChats} /> */}
     </div>
+  ) : (
+    <WaitPage />
   );
 }
 

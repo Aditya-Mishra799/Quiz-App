@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import Question from "../components/Question";
 import Timer from "../components/Timer";
 import ChatFAB from "../components/ChatFAB";
@@ -6,6 +6,12 @@ import styles from "./QuestionPage.module.css";
 import Button from "../components/Button";
 import { useNavigate } from "react-router-dom";
 import socket from "../socket";
+import {
+  calcRemTime,
+  clearQuestionActive,
+  isQuestionActive,
+  removeIfExpired,
+} from "../utils/questionMarker";
 function TeacherLivePollPage() {
   const [currentQuestion, setCurrentQuestion] = useState(
     sessionStorage.getItem("currentQuestion")
@@ -13,14 +19,25 @@ function TeacherLivePollPage() {
       : null
   );
   const navigate = useNavigate();
+  const [durationActive, setDurationActive] = useState(true);
+
+  useEffect(() => {
+    const remTime = calcRemTime(
+      currentQuestion?.askedAt,
+      currentQuestion.duration
+    );
+    const timer = setTimeout(() => {
+      clearQuestionActive();
+      setDurationActive(false);
+    }, remTime * 1000);
+    return () => clearTimeout(timer);
+  }, []);
 
   useEffect(() => {
     if (!currentQuestion) {
-      navigate("/teachers");
+      navigate("/teacher");
     }
-    console.log(currentQuestion);
     socket.on("poll-update", ({ totalAnswered, options }) => {
-      console.log("Updated");
       setCurrentQuestion((prev) => {
         const newSate = { ...prev };
         newSate.totalAnswered = totalAnswered;
@@ -28,19 +45,17 @@ function TeacherLivePollPage() {
           ...op,
           totalSelected: options[idx].totalSelected,
         }));
-        sessionStorage.setItem(
-          "currentQuestion",
-          JSON.stringify(currentQuestion)
-        );
+        sessionStorage.setItem("currentQuestion", JSON.stringify(newSate));
         return newSate;
       });
     });
+
+    socket.on("question-ended", () => {
+      clearQuestionActive();
+      setDurationActive(false);
+    });
   }, []);
 
-  let timeLeft =
-    currentQuestion?.duration -
-    Math.floor((Date.now() - currentQuestion?.askedAt) / 1000);
-  timeLeft = timeLeft < 0 ? 0 : timeLeft;
   return (
     <div className={styles.app}>
       <div className={styles.container}>
@@ -50,8 +65,8 @@ function TeacherLivePollPage() {
               Question {currentQuestion?.id || 1}
             </h1>
             <Timer
-              timeInSeconds={timeLeft || 0}
-              // isActive={true}
+              startedAt={currentQuestion?.askedAt}
+              duration={currentQuestion?.duration}
             />
           </div>
         </div>
@@ -65,7 +80,9 @@ function TeacherLivePollPage() {
         />
 
         <div className={styles.controls}>
-          <Button>+ Ask new a Question</Button>
+          <Button disabled={durationActive} onClick={() => navigate("/teacher")}>
+            + Ask new a Question
+          </Button>
         </div>
       </div>
     </div>

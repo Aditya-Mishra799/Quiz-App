@@ -9,6 +9,7 @@ import styles from "./TeacherPage.module.css";
 import YesNoToggle from "../components/YesNoToggle";
 import { useNavigate } from "react-router-dom";
 import socket from "../socket";
+import { isQuestionActive, setQuestionActive } from "../utils/questionMarker";
 const timerOptions = [
   { label: "60 seconds", value: 60 },
   { label: "2 mins", value: 120 },
@@ -50,9 +51,14 @@ const TeacherPage = () => {
     });
   };
   useEffect(() => {
+    if (isQuestionActive()) {
+      navigate("/live-poll");
+    }
     socket.on("new-question", (data) => {
       sessionStorage.setItem("currentQuestion", JSON.stringify(data));
+      setQuestionActive();
       navigate("/live-poll");
+      sessionStorage.setItem("currentQuestion", JSON.stringify(data));
     });
   }, []);
   return (

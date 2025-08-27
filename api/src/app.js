@@ -10,7 +10,7 @@ app.use(cookieParser());
 const students = new Map();
 let currentQuestion = null;
 let questionTimer = null;
-const prevQuestions = []
+const prevQuestions = [];
 export const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
@@ -49,29 +49,47 @@ io.on("connection", (socket) => {
       askedAt: Date.now(),
       id: prevQuestions.length,
     };
-    console.log("New Question Asked...")
+    console.log("New Question Asked...");
+    console.log("Duration", duration)
     //send to all
     io.emit("new-question", { ...currentQuestion });
     questionTimer = setTimeout(() => {
+      console.log("ending question...", duration)
       io.emit("question-ended", currentQuestion);
-      prevQuestions.push(currentQuestion)
+      prevQuestions.push(currentQuestion);
       currentQuestion = null;
       questionTimer = null;
     }, duration * 1000);
   });
+
+
   socket.on("submit-answer", ({ uuid, optionIndex }) => {
-    if (!currentQuestion) return;
+    if (!currentQuestion) {
+      socket.emit("submit-answer-error", {
+        message: "Question Duration Expired :(",
+      });
+      return;
+    }
     const student = students.get(uuid);
-    if (!student) return;
+    if (!student) {
+      socket.emit("submit-answer-error", {
+        message: "Your are unregistered !!!",
+      });
+      return;
+    }
     if (!currentQuestion.votedStudents)
       currentQuestion.votedStudents = new Set();
-    if (currentQuestion.votedStudents.has(uuid)) return;
-    console.log("New Answer Submitted...")
+    if (currentQuestion.votedStudents.has(uuid)) {
+      socket.emit("submit-answer-error", { message: "Already Voted !!!" });
+      return;
+    }
     currentQuestion.votedStudents.add(uuid);
     currentQuestion.totalAnswered += 1;
     if (currentQuestion.options[optionIndex]) {
       currentQuestion.options[optionIndex].totalSelected += 1;
     }
+    socket.emit("submit-answer-success", { message: "Success", optionIndex });
+
     io.emit("poll-update", {
       totalAnswered: currentQuestion.totalAnswered,
       options: currentQuestion.options.map((opt) => ({
@@ -79,4 +97,9 @@ io.on("connection", (socket) => {
       })),
     });
   });
+  socket.on("disconnect", () => {
+    console.log("Socket disconnected:", socket.id);
+  });
+
+  // socket.on("refresh", )
 });

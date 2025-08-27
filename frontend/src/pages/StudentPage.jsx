@@ -18,6 +18,10 @@ const StudentPage = () => {
       setName(name);
       navigate("/questions");
     }
+    socket.on("new-question", (data) => {
+      sessionStorage.setItem("currentQuestion", JSON.stringify(data));
+      navigate("/questions");
+    });
   }, [navigate]);
 
 

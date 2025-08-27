@@ -8,10 +8,6 @@ const Question = ({
   selectedOption,
   totalStudentsAnswered = 0,
   showDistribution = false,
-  showCorrectAnswer = false,
-  correctAnswerId = null,
-  questionState = "active",
-  onSubmit,
 }) => {
   const calculatePercentage = (totalSelected) => {
     if (totalStudentsAnswered === 0) return 0;
@@ -26,10 +22,10 @@ const Question = ({
           <div
             key={option.value + Math.random()}
             className={`${styles.option} ${
-              selectedOption ? styles.selectedOption : ""
+              selectedOption === index ? styles.selectedOption : ""
             } ${showDistribution ? styles.filled : ""}`}
             onClick={() =>
-              questionState === "active" && onOptionSelect(option.id)
+              (!showDistribution && onOptionSelect) && onOptionSelect(index)
             }
           >
             {showDistribution && (
