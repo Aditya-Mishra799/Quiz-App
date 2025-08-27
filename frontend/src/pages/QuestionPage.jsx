@@ -7,30 +7,7 @@ import Button from "../components/Button";
 import { useNavigate } from "react-router-dom";
 import socket from "../socket";
 import WaitPage from "./WaitPage";
-import { calcRemTime, clearQuestionActive } from "../utils/questionMarker";
-
-// const sampleParticipants = [
-//   { id: 1, name: "Rahul Arora" },
-//   { id: 2, name: "Pushpender Rautela" },
-//   { id: 3, name: "Rijul Zalpuri" },
-//   { id: 4, name: "Nadeem N" },
-//   { id: 5, name: "Ashwin Sharma" },
-// ];
-
-// const sampleChats = [
-//   {
-//     id: 1,
-//     user: "User1",
-//     message: "Hey There , how can I help?",
-//     timestamp: new Date(),
-//   },
-//   {
-//     id: 2,
-//     user: "User2",
-//     message: "Nothing bro..just chill!!",
-//     timestamp: new Date(),
-//   },
-// ];
+import { calcRemTime } from "../utils/questionMarker";
 
 function QuestionsPage() {
   const [currentQuestion, setCurrentQuestion] = useState(
@@ -41,14 +18,14 @@ function QuestionsPage() {
   const [selectedOption, setSelectedOption] = useState(null);
   const [showDistribution, setShowDistribution] = useState(false);
   const [loading, setLoading] = useState(false);
-  const navigate = useNavigate()
+  const navigate = useNavigate();
 
   const storeSelectedOption = useCallback((val) => {
     sessionStorage.setItem("selected-index", String(val));
   }, []);
 
   useEffect(() => {
-    if(!currentQuestion) return;
+    if (!currentQuestion) return;
     const remTime = calcRemTime(
       currentQuestion?.askedAt,
       currentQuestion?.duration
@@ -96,9 +73,9 @@ function QuestionsPage() {
         return newSate;
       });
     });
-    const student = sessionStorage.getItem("student")
-    if(!student){
-      navigate("/student")
+    const student = sessionStorage.getItem("student");
+    if (!student) {
+      navigate("/student");
     }
   }, []);
 
@@ -156,7 +133,7 @@ function QuestionsPage() {
         </div>
       </div>
 
-      {/* <ChatFAB participants={sampleParticipants} chats={sampleChats} /> */}
+      <ChatFAB />
     </div>
   ) : (
     <WaitPage />

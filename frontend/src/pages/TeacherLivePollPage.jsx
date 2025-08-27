@@ -80,11 +80,15 @@ function TeacherLivePollPage() {
         />
 
         <div className={styles.controls}>
-          <Button disabled={durationActive} onClick={() => navigate("/teacher")}>
+          <Button
+            disabled={durationActive}
+            onClick={() => navigate("/teacher")}
+          >
             + Ask new a Question
           </Button>
         </div>
       </div>
+      <ChatFAB />
     </div>
   );
 }

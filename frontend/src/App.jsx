@@ -5,6 +5,7 @@ import StudentPage from "./pages/StudentPage"
 import TeacherPage from "./pages/TeacherPage"
 import QuestionsPage from './pages/QuestionPage'
 import TeacherLivePollPage from './pages/TeacherLivePollPage'
+import PollHistory from './pages/PollHistory'
 function App() {
   return (
     <>
@@ -14,6 +15,7 @@ function App() {
         <Route path="/teacher" element={<TeacherPage />} />
         <Route path="/questions" element={<QuestionsPage />} />
         <Route path="/live-poll" element={<TeacherLivePollPage />} />
+        <Route path="/poll-history" element={<PollHistory />} />
       </Routes> 
     </>
   )

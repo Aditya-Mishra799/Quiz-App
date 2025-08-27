@@ -3,6 +3,7 @@ import http from "http";
 import { Server } from "socket.io";
 import cookieParser from "cookie-parser";
 import dotenv from "dotenv";
+import cors from "cors"
 dotenv.config();
 const app = express();
 app.use(cookieParser());
@@ -11,6 +12,7 @@ const students = new Map();
 let currentQuestion = null;
 let questionTimer = null;
 const prevQuestions = [];
+
 export const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
@@ -18,9 +20,13 @@ const io = new Server(server, {
     credentials: true,
   },
 });
-
+app.use(cors({
+  origin:process.env.FRONTEND,
+}))
+app.get("/poll-history", (req, res) => {
+  return res.json(prevQuestions);
+});
 io.on("connection", (socket) => {
-  console.log("Socked Registered ....", socket.id);
   socket.on("register", ({ uuid, name }) => {
     if (!uuid || !name) {
       socket.emit("registration-error", { message: "UUID and name required" });
@@ -49,19 +55,15 @@ io.on("connection", (socket) => {
       askedAt: Date.now(),
       id: prevQuestions.length,
     };
-    console.log("New Question Asked...");
-    console.log("Duration", duration)
     //send to all
     io.emit("new-question", { ...currentQuestion });
     questionTimer = setTimeout(() => {
-      console.log("ending question...", duration)
       io.emit("question-ended", currentQuestion);
       prevQuestions.push(currentQuestion);
       currentQuestion = null;
       questionTimer = null;
     }, duration * 1000);
   });
-
 
   socket.on("submit-answer", ({ uuid, optionIndex }) => {
     if (!currentQuestion) {
@@ -101,5 +103,25 @@ io.on("connection", (socket) => {
     console.log("Socket disconnected:", socket.id);
   });
 
-  // socket.on("refresh", )
+  socket.on("chat-message", ({ uuid, message }) => {
+    const student = students.get(uuid);
+    if (!student) {
+      socket.emit("chat-message-error", {
+        message: "Your are unregistered !!!",
+      });
+      return;
+    }
+    socket.emit("chat-message-success", {
+      message: message,
+      user: student.name,
+      id: Date.now(),
+      self: true,
+    });
+    socket.broadcast.emit("new-chat", {
+      message: message,
+      user: student.name,
+      id: Date.now(),
+      self: false,
+    });
+  });
 });
