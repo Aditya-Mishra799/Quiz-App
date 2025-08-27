@@ -1,0 +1,66 @@
+.app {
+    min-height: 100vh;
+    padding-top: 220px;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .container {
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .header {
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+    margin-bottom: 2rem;
+  }
+  .questionWithTimer{
+    width: 241px;
+    height: 29px;
+    display: flex;
+    gap: 35px;
+    margin-bottom: 25px;
+  }
+  .questionTitle {
+    font-size: 22px;
+    font-weight: 600;
+    color: black;
+    margin: 0;
+  }
+  
+  .waitingMessage {
+    text-align: center;
+    margin-top: 44px;
+  }
+  
+  .waitingMessage p {
+    font-size: 24px;
+    color: black;
+    font-weight: 600;
+  }
+  
+  .controls {
+    margin-top: 39px;
+    align-self: flex-end;
+  }
+  
+  .toggleButton {
+    background-color: #667eea;
+    color: white;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 0.5rem;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s;
+  }
+  
+  .toggleButton:hover {
+    background-color: #5a67d8;
+  }

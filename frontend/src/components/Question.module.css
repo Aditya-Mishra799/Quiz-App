@@ -1,0 +1,128 @@
+.questionContainer {
+    background: white;
+    border-radius: 10px;
+    width: 727px;
+    min-height: 353px;
+    border: 1px solid #AF8FF1;
+  }
+  
+  .questionHeader {
+    background: linear-gradient(to right, #343434, #6E6E6E);
+    color: white;
+    padding: 1.5rem;
+    font-size: 17px;
+    font-weight: 600;
+    border-top-left-radius: 10px;
+    border-top-right-radius: 10px;
+  }
+  
+  .optionsContainer {
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+  
+  .option {
+    border: 1px solid #8D8D8D30;
+    border-radius: 6px;
+    padding: 26px 23px;
+    cursor: pointer;
+    transition: all 0.2s;
+    min-height: 3.5rem;
+    display: flex;
+    align-items: center;
+    width: 678px;
+    height: 55px;
+    font-size: 16px;
+    font-weight: 600;
+    color: black;
+    background-color: #F6F6F6;
+    position: relative;
+  }
+  
+  .option:hover {
+    transform: translateY(-1px);
+  }
+  
+  .option.selectedOption {
+    border: 1.5px solid #8F64E1;
+    background-color:  white;
+  }
+  
+  .option.correctOption {
+    border-color: #38a169;
+    background-color: #f0fff4;
+  }
+
+  
+  .optionContent {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    gap: 10px;
+    z-index: 1;
+  }
+
+  .fill {
+    position: absolute;
+    left: 0;
+    top: 0;
+    height: 100%;
+    background-color: #6766D5;
+    border-radius: 6px;
+    z-index: 0; 
+    transition: width 0.3s ease-in-out;
+  }
+  
+  .optionNumber {
+    background: linear-gradient(to right, #8F64E1, #4E377B);
+    color: white;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 11px;
+    flex-shrink: 0;
+  }
+  .option.filled .optionNumber{
+    background: white;
+    color: #6766D5;
+    border: 1px solid #6766D5;
+  }
+  .correctOption .optionNumber {
+    background-color: #38a169;
+  }
+  
+  .optionText {
+    flex: 1;
+    font-weight: 600;
+    color: black;
+  }
+  
+  
+  /* .submitContainer {
+    padding: 0 1.5rem 1.5rem;
+    display: flex;
+    justify-content: flex-end;
+  }
+  
+  .submitButton {
+    background-color: #667eea;
+    color: white;
+    border: none;
+    padding: 0.75rem 2rem;
+    border-radius: 2rem;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    min-width: 120px;
+  }
+  
+  .submitButton:hover {
+    background-color: #5a67d8;
+  } */

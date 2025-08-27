@@ -1,0 +1,41 @@
+.timer {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.2s;
+    width: 87px;
+    height: 29px;
+  }
+  
+  .timeRunningOut {
+    animation: pulse 1s infinite;
+  }
+  
+  @keyframes pulse {
+    0%, 100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.7;
+    }
+  }
+  
+  .timerIcon {
+    color: #4a5568;
+    display: flex;
+    align-items: center;
+  }
+  
+  .timeRunningOut .timerIcon {
+    color: #e53e3e;
+  }
+  
+  .timeText {
+    font-weight: 600;
+    font-size:  18px;
+    color: black;
+  }
+  
+  .timeRunningOut .timeText {
+    color: #CB1206;
+  }

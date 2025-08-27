@@ -1,0 +1,22 @@
+  .input {
+    flex: 1;
+    padding: 12px 16px;
+    background: #F2F2F2;
+    border: none;
+    border-radius: 8px;
+    font-size: 18px;
+    font-weight: 400;
+    width: 507px;
+    height: 63px;
+    color: black;
+  }
+  
+  .input:focus {
+    outline: 2px solid #7c3aed;
+    outline-offset: -2px;
+  }
+  
+  .input::placeholder {
+    color: #9ca3af;
+  }
+  
