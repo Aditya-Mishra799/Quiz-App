@@ -29,6 +29,9 @@ app.use(
 app.get("/poll-history", (req, res) => {
   return res.json(prevQuestions);
 });
+app.get("/",  (req, res) => {
+  return res.json({messgae:"API is running...."});
+})
 io.on("connection", (socket) => {
   socket.on("register", ({ uuid, name }) => {
     if (!uuid || !name) {
