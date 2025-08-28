@@ -1,0 +1,26 @@
+services:
+  api:
+    build: ./api
+    container_name: api
+    expose:
+      - "3000"
+    env_file:
+      - ./api/.env
+    networks:
+      - app-network
+
+  frontend:
+    build: ./frontend
+    container_name: frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - api
+    env_file:
+      - ./frontend/.env
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
