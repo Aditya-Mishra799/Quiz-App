@@ -8,7 +8,7 @@ const Home = () => {
   return (
     <div className= {styles.home}>
       <Badge />
-      <div className="desc">
+      <div className={styles.desc}>
         <h2>Welcome to the <span className={styles["bold"]}>Live Polling System</span></h2>
         <p>
           Please select the role that best describes you to begin using the live

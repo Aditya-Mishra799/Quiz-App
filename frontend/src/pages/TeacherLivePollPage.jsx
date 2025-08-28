@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import Question from "../components/Question";
 import Timer from "../components/Timer";
 import ChatFAB from "../components/ChatFAB";
-import styles from "./QuestionPage.module.css";
+import styles from "./TeacherLivePollPage.module.css";
 import Button from "../components/Button";
 import { useNavigate } from "react-router-dom";
 import socket from "../socket";
@@ -12,6 +12,9 @@ import {
   isQuestionActive,
   removeIfExpired,
 } from "../utils/questionMarker";
+import ButtonLight from "../components/ButtonLight";
+import EyeIcon from "../assets/Eye.svg";
+
 function TeacherLivePollPage() {
   const [currentQuestion, setCurrentQuestion] = useState(
     sessionStorage.getItem("currentQuestion")
@@ -58,6 +61,12 @@ function TeacherLivePollPage() {
 
   return (
     <div className={styles.app}>
+      <div className={styles.pollButton}>
+      <ButtonLight onClick = {()=>navigate("/poll-history")}>
+        <img src={EyeIcon} alt="poll-history" />
+        View Poll history
+      </ButtonLight>
+      </div>
       <div className={styles.container}>
         <div className={styles.header}>
           <div className={styles.questionWithTimer}>
@@ -88,7 +97,7 @@ function TeacherLivePollPage() {
           </Button>
         </div>
       </div>
-      <ChatFAB />
+      <ChatFAB isTeacher={true} />
     </div>
   );
 }

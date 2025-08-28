@@ -17,7 +17,10 @@ const timerOptions = [
   { label: "10 mins", value: 600 },
 ];
 const TeacherPage = () => {
-  const [options, setOptions] = useState([]);
+  const [options, setOptions] = useState([
+    { value: "", correct: false, id: Date.now() + Math.random() },
+    { value: "", correct: false, id: Date.now() + Math.random() },
+  ]);
   const [question, setQuestion] = useState("");
   const [duration, setDuration] = useState(60);
   const navigate = useNavigate();

@@ -3,7 +3,7 @@ import http from "http";
 import { Server } from "socket.io";
 import cookieParser from "cookie-parser";
 import dotenv from "dotenv";
-import cors from "cors"
+import cors from "cors";
 dotenv.config();
 const app = express();
 app.use(cookieParser());
@@ -12,6 +12,7 @@ const students = new Map();
 let currentQuestion = null;
 let questionTimer = null;
 const prevQuestions = [];
+const blockedStudents = new Map();
 
 export const server = http.createServer(app);
 const io = new Server(server, {
@@ -20,9 +21,11 @@ const io = new Server(server, {
     credentials: true,
   },
 });
-app.use(cors({
-  origin:process.env.FRONTEND,
-}))
+app.use(
+  cors({
+    origin: process.env.FRONTEND,
+  })
+);
 app.get("/poll-history", (req, res) => {
   return res.json(prevQuestions);
 });
@@ -32,9 +35,16 @@ io.on("connection", (socket) => {
       socket.emit("registration-error", { message: "UUID and name required" });
       return;
     }
+    if (blockedStudents.has(uuid)) {
+      socket.emit("block-student", { uuid });
+    }
     students.set(uuid, { name, socketId: socket.id });
     console.log(`Student registered: ${name} (${uuid})`);
     socket.emit("registration-success", { uuid, name });
+
+    // new user broadcast
+    emitAllStudents(students, io);
+
     if (currentQuestion) {
       socket.emit("new-question", currentQuestion);
     }
@@ -72,6 +82,9 @@ io.on("connection", (socket) => {
       });
       return;
     }
+    if (blockedStudents.has(uuid)) {
+      socket.emit("block-student", { uuid });
+    }
     const student = students.get(uuid);
     if (!student) {
       socket.emit("submit-answer-error", {
@@ -103,9 +116,9 @@ io.on("connection", (socket) => {
     console.log("Socket disconnected:", socket.id);
   });
 
-  socket.on("chat-message", ({ uuid, message }) => {
+  socket.on("chat-message", ({ uuid, message, isTeacher }) => {
     const student = students.get(uuid);
-    if (!student) {
+    if (!student && !isTeacher) {
       socket.emit("chat-message-error", {
         message: "Your are unregistered !!!",
       });
@@ -113,15 +126,42 @@ io.on("connection", (socket) => {
     }
     socket.emit("chat-message-success", {
       message: message,
-      user: student.name,
+      user: isTeacher ? "Teacher" : student.name,
       id: Date.now(),
       self: true,
+      teacher: isTeacher,
     });
     socket.broadcast.emit("new-chat", {
       message: message,
-      user: student.name,
+      user: isTeacher ? "Teacher" : student.name,
       id: Date.now(),
       self: false,
+      teacher: isTeacher,
     });
   });
+  socket.on("get-all-students", () => {
+    socket.emit(
+      "all-students",
+      Array.from(students.entries()).map(([uuid, { name }]) => ({
+        uuid,
+        name,
+      }))
+    );
+  });
+
+  socket.on("kick-student", ({ uuid }) => {
+    const student = students.get(uuid);
+    if (!student) return;
+    blockedStudents.set(uuid, student);
+    students.delete(uuid);
+    emitAllStudents(students, io);
+    io.emit("block-student", { uuid });
+  });
 });
+
+function emitAllStudents(students, socketOrIO) {
+  socketOrIO.emit(
+    "all-students",
+    Array.from(students.entries()).map(([uuid, { name }]) => ({ uuid, name }))
+  );
+}

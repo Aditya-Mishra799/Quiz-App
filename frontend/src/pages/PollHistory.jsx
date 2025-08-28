@@ -43,7 +43,7 @@ const PollHistory = () => {
           )}
         </div>
       </div>
-      <ChatFAB/>
+      <ChatFAB isTeacher={true}/>
     </div>
   );
 };

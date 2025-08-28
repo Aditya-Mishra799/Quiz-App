@@ -3,7 +3,7 @@ import styles from "./ChatFAB.module.css";
 import commentIcon from "../assets/Comment.svg";
 import socket from "../socket";
 
-const ChatFAB = ({}) => {
+const ChatFAB = ({ isTeacher }) => {
   const [participants, setParticipants] = useState([]);
   const [chats, setChats] = useState([]);
   const [message, setMessage] = useState("");
@@ -15,12 +15,20 @@ const ChatFAB = ({}) => {
 
   useEffect(() => {
     const storedChats = sessionStorage.getItem("chats");
+    const storedParticipants = sessionStorage.getItem("participants");
     if (storedChats) {
       setChats(JSON.parse(storedChats) || []);
     }
+    if (storedParticipants) {
+      setParticipants(JSON.parse(storedParticipants) || []);
+    }
+  }, [isOpen]);
+
+  useEffect(() => {
     socket.on("chat-message-success", (newChat) => {
       setLoading(false);
       setChats((prev) => [...prev, newChat]);
+      setMessage("")
     });
     socket.on("chat-message-error", ({ message }) => {
       setLoading(false);
@@ -32,15 +40,31 @@ const ChatFAB = ({}) => {
   }, []);
 
   useEffect(() => {
+    const updateParticipants = (students) => {
+      sessionStorage.setItem("participants", JSON.stringify(students));
+      setParticipants(students);
+    };
+    socket.on("all-students", updateParticipants);
+
+    return () => {
+      socket.off("all-students", updateParticipants);
+    };
+  }, []);
+
+  useEffect(() => {
+    socket.emit("get-all-students");
+  }, []);
+
+  useEffect(() => {
     if (chats.length == 0) return;
     sessionStorage.setItem("chats", JSON.stringify(chats));
   }, [chats]);
   const sendMessage = () => {
     setLoading(true);
     const student = sessionStorage.getItem("student");
-    if (student) {
+    if (student || isTeacher) {
       const uuid = JSON.parse(student)?.uuid;
-      socket.emit("chat-message", { message, uuid });
+      socket.emit("chat-message", { message, uuid, isTeacher: isTeacher ? true : false });
     }
   };
   const toggleFAB = () => {
@@ -48,7 +72,7 @@ const ChatFAB = ({}) => {
   };
 
   const handleKickOut = (participantId) => {
-    console.log("Kick out participant:", participantId);
+    socket.emit("kick-student", {uuid: participantId})
   };
 
   useEffect(() => {
@@ -104,8 +128,11 @@ const ChatFAB = ({}) => {
                     <input
                       value={message}
                       onChange={(e) => setMessage(e.target.value)}
+                      disabled={loading}
                     />
-                    <button onClick={sendMessage}>{">"}</button>
+                    <button onClick={sendMessage} disabled={loading}>
+                      {">"}
+                    </button>
                   </div>
                 </div>
               )}
@@ -114,19 +141,25 @@ const ChatFAB = ({}) => {
                 <div className={styles.participantsContainer}>
                   <div className={styles.participantHeader}>
                     <span className={styles.nameColumn}>Name</span>
-                    <span className={styles.actionColumn}>Action</span>
+                    {isTeacher &&<span className={styles.actionColumn}>Action</span>}
                   </div>
                   {participants.map((participant) => (
-                    <div key={participant.id} className={styles.participantRow}>
+                    <div
+                      key={participant.uuid}
+                      className={styles.participantRow}
+                    >
                       <span className={styles.participantName}>
                         {participant.name}
                       </span>
-                      <button
-                        className={styles.kickoutButton}
-                        onClick={() => handleKickOut(participant.id)}
-                      >
-                        Kick out
-                      </button>
+                      {isTeacher && (
+                        <button
+                          className={styles.kickoutButton}
+                          disabled = {!isTeacher}
+                          onClick={() => handleKickOut(participant.uuid)}
+                        >
+                          Kick out
+                        </button>
+                      )}
                     </div>
                   ))}
                 </div>
